@@ -6,3 +6,5 @@ UnityGraphicsProgramming
 - Unityではじめるプロシージャルモデリング [@mattatz](https://github.com/mattatz) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/ProceduralModeling
 
 - 雰囲気で始めるMarchingCubes入門 [@kaiware007](https://github.com/kaiware007) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/GPUMarchingCubes
+
+- SPH法による流体シミュレーション [@kodai100](https://github.com/kodai100) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/SPHFluid
