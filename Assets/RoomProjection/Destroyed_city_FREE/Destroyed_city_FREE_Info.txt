@@ -1,0 +1,8 @@
+﻿//Profi developers 2013 v1.0
+//Destroyed city FREE edition
+//Key words: Art Environment Architecture Urban Industrial 3d Model Ruined Skyscraper Building Free Profi Developers
+- This environmet was created to make our Profidevelopers team contribution to the Unity Direct X11 2013 competition.
+- It is a multiplayer map environment design of deserted city under construction on a remote, forgotten island. Construction site was gradually overgrown with vegetation that has engulfed everything and gave the city post-apocalyptic look.
+- 4 prefabs trees, 1 prefab ruined skyscraper, 1 model of debris, 10 textures. 
+- The model of ruin and debris has prepared two mapping coordinates. One for the diffuse map and second for the custom light map (so uw strips dosen´t overlap). Coordinates were made manually for best quality.
+- Demo scene with basic fps controler included. Just push play button.
