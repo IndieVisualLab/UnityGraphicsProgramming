@@ -12,3 +12,5 @@ UnityGraphicsProgramming
 - SPH法による流体シミュレーション [@kodai100](https://github.com/kodai100) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/SPHFluid
 
 - 群のシミュレーションのGPU実装 [@hiroakioishi](https://github.com/hiroakioishi) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/BoidsSimulationOnGPU
+
+- MultiPlanePerspectiveProjection [@fuqunaga](https://github.com/fuqunaga) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/RoomProjection
