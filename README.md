@@ -7,6 +7,8 @@ UnityGraphicsProgramming
 
 - 雰囲気で始めるMarchingCubes入門 [@kaiware007](https://github.com/kaiware007) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/GPUMarchingCubes
 
+- 格子法による流体シミュレーション [@sakope](https://github.com/sakope) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/StableFluids
+
 - SPH法による流体シミュレーション [@kodai100](https://github.com/kodai100) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/SPHFluid
 
 - 群のシミュレーションのGPU実装 [@hiroakioishi](https://github.com/hiroakioishi) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/BoidsSimulationOnGPU
