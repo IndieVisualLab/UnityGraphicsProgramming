@@ -1,0 +1,30 @@
+﻿#pragma kernel KernelFunction_A
+#pragma kernel KernelFunction_B
+
+RWTexture2D<float4> textureBuffer;
+
+[numthreads(8, 8, 1)]
+void KernelFunction_A(uint3 dispatchThreadID : SV_DispatchThreadID)
+{
+    // SV_DispathThreadID は、SV_Group_ID * numthreads + GroupThreadID です。
+
+    float width, height;
+    textureBuffer.GetDimensions(width, height);
+
+    textureBuffer[dispatchThreadID.xy] = float4(dispatchThreadID.x / width,
+                                                dispatchThreadID.x / width,
+                                                dispatchThreadID.x / width,
+                                                1);
+}
+
+[numthreads(8, 8, 1)]
+void KernelFunction_B(uint3 dispatchThreadID : SV_DispatchThreadID)
+{
+    float width, height;
+    textureBuffer.GetDimensions(width, height);
+
+    textureBuffer[dispatchThreadID.xy] = float4(dispatchThreadID.y / width,
+                                                dispatchThreadID.y / width,
+                                                dispatchThreadID.y / width,
+                                                1);
+}
