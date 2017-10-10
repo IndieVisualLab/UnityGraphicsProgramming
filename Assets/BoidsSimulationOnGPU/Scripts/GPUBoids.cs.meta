@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 4be9a8d5d645e4545886be6914d2e5e9
+timeCreated: 1507467386
+licenseType: Pro
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences:
+  - BoidsCS: {fileID: 7200000, guid: 47567044d261e474db26e25410628c0a, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

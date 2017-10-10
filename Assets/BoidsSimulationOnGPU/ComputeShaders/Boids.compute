@@ -1,0 +1,206 @@
+﻿// カーネル関数を指定
+#pragma kernel ForceCS      // 操舵力を計算
+#pragma kernel IntegrateCS  // 速度, 位置を計算
+
+// Boidデータの構造体
+struct BoidData
+{
+	float3 velocity; // 速度
+	float3 position; // 位置
+};
+
+// スレッドグループのスレッドのサイズ
+#define SIMULATION_BLOCK_SIZE 256
+
+// Boidデータのバッファ（読み取り用）
+StructuredBuffer<BoidData>   _BoidDataBufferRead;
+// Boidデータのバッファ（読み取り, 書き込み用）
+RWStructuredBuffer<BoidData> _BoidDataBufferWrite;
+// Boidの操舵力のバッファ（読み取り用）
+StructuredBuffer<float3>     _BoidForceBufferRead;
+// Boidの操舵力のバッファ（読み取り, 書き込み用）
+RWStructuredBuffer<float3>   _BoidForceBufferWrite;
+
+int _MaxBoidObjectNum; // Boidオブジェクト数
+
+float _DeltaTime;      // 前フレームから経過した時間
+
+float _SeparateNeighborhoodRadius;  // 分離を適用する他の個体との距離
+float _AlignmentNeighborhoodRadius; // 整列を適用する他の個体との距離
+float _CohesionNeighborhoodRadius;  // 結合を適用する他の個体との距離
+
+float _MaxSpeed;        // 速度の最大値
+float _MaxSteerForce;   // 操舵する力の最大値
+
+float _SeparateWeight;  // 分離適用時の重み
+float _AlignmentWeight; // 整列適用時の重み
+float _CohesionWeight;  // 結合適用時の重み
+
+float4 _WallCenter;      // 壁の中心座標
+float4 _WallSize;        // 壁のサイズ
+float  _AvoidWallWeight; // 壁を避ける強さの重み
+
+
+// ベクトルの大きさを制限する
+float3 limit(float3 vec, float max)
+{
+	float length = sqrt(dot(vec, vec)); // 大きさ
+	return (length > max && length > 0) ? vec.xyz * (max / length) : vec.xyz;
+}
+
+// 壁に当たった時に逆向きの力を返す
+float3 avoidWall(float3 position)
+{
+	float3 wc = _WallCenter.xyz;
+	float3 ws = _WallSize.xyz;
+	float3 acc = float3(0, 0, 0);
+	// x
+	acc.x = (position.x < wc.x - ws.x * 0.5) ? acc.x + 1.0 : acc.x;
+	acc.x = (position.x > wc.x + ws.x * 0.5) ? acc.x - 1.0 : acc.x;
+	
+	// y
+	acc.y = (position.y < wc.y - ws.y * 0.5) ? acc.y + 1.0 : acc.y;
+	acc.y = (position.y > wc.y + ws.y * 0.5) ? acc.y - 1.0 : acc.y;
+	
+	// z
+	acc.z = (position.z < wc.z - ws.z * 0.5) ? acc.z + 1.0 : acc.z;
+	acc.z = (position.z > wc.z + ws.z * 0.5) ? acc.z - 1.0 : acc.z;
+
+	return acc;
+}
+
+// シェアードメモリ Boidデータ格納用
+groupshared BoidData boid_data[SIMULATION_BLOCK_SIZE];
+
+// 操舵力の計算用カーネル関数
+[numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
+void ForceCS
+(
+	uint3 DTid : SV_DispatchThreadID, // スレッド全体で固有のID
+	uint3 Gid : SV_GroupID,           // グループのID
+	uint3 GTid : SV_GroupThreadID,    // グループ内のスレッドID
+	uint  GI : SV_GroupIndex          // SV_GroupThreadIDを一次元にしたもの 0-255
+)
+{
+	const unsigned int P_ID = DTid.x; // 自身のID
+	float3 P_position = _BoidDataBufferRead[P_ID].position; // 自身の位置
+	float3 P_velocity = _BoidDataBufferRead[P_ID].velocity; // 自身の速度
+
+	float3 force = float3(0, 0, 0); // 操舵力を初期化
+
+	float3 sepPosSum = float3(0, 0, 0); // 分離計算用 位置加算変数
+	int sepCount = 0; // 分離のために計算した他の個体の数のカウント用変数
+
+	float3 aliVelSum = float3(0, 0, 0); // 整列計算用 速度加算変数
+	int aliCount = 0; // 整列のために計算した他の個体の数のカウント用変数
+
+	float3 cohPosSum = float3(0, 0, 0); // 結合計算用 位置加算変数
+	int cohCount = 0; // 結合のために計算した他の個体の数のカウント用変数
+
+	// SIMULATION_BLOCK_SIZE（グループスレッド数）ごとの実行 (グループ数分実行)
+	[loop]
+	for (uint N_block_ID = 0; N_block_ID < (uint)_MaxBoidObjectNum;
+		N_block_ID += SIMULATION_BLOCK_SIZE)
+	{
+		// SIMULATION_BLOCK_SIZE分のBoidデータを、シェアードメモリに格納
+		boid_data[GI] = _BoidDataBufferRead[N_block_ID + GI];
+
+		// すべてのグループ共有アクセスが完了し、
+		// グループ内のすべてのスレッドがこの呼び出しに到達するまで、
+		// グループ内のすべてのスレッドの実行をブロックする
+		GroupMemoryBarrierWithGroupSync();
+
+		// 他の個体との計算
+		for (int N_tile_ID = 0; N_tile_ID < SIMULATION_BLOCK_SIZE; N_tile_ID++)
+		{
+			float3 N_position = boid_data[N_tile_ID].position; // 他の個体の位置
+			float3 N_velocity = boid_data[N_tile_ID].velocity; // 他の個体の速度
+
+			float3 diff = P_position - N_position; // 自身と他の個体の位置の差
+			float  dist = sqrt(dot(diff, diff));   // 自身と他の個体の位置の距離
+
+			// --- 分離（Separation） ---
+			if (dist > 0.0 && dist <= _SeparateNeighborhoodRadius)
+			{
+				// 他の個体の位置から自身へ向かうベクトル
+				float3 repulse = normalize(P_position - N_position);
+				// 自身と他の個体の位置の距離で割る（距離が遠ければ影響を小さく）
+				repulse /= dist;
+				sepPosSum += repulse; // 加算
+				sepCount++;           // 個体数カウント
+			}
+
+			// --- 整列（Alignment） ---
+			if (dist > 0.0 && dist <= _AlignmentNeighborhoodRadius)
+			{
+				aliVelSum += N_velocity; // 加算
+				aliCount++;              // 個体数カウント
+			}
+
+			// --- 結合（Cohesion） ---
+			if (dist > 0.0 && dist <= _CohesionNeighborhoodRadius)
+			{
+				cohPosSum += N_position; // 加算
+				cohCount++;              // 個体数カウント 
+			}
+		}
+		GroupMemoryBarrierWithGroupSync();
+	}
+
+	// 操舵力（分離）
+	float3 sepSteer = (float3)0.0;
+	if (sepCount > 0)
+	{
+		sepSteer = sepPosSum / (float)sepCount;     // 平均を求める
+		sepSteer = normalize(sepSteer) * _MaxSpeed; // 最大速度に調整
+		sepSteer = sepSteer - P_velocity;           // 操舵力を計算
+		sepSteer = limit(sepSteer, _MaxSteerForce); // 操舵力を制限
+	}
+
+	// 操舵力（整列）
+	float3 aliSteer = (float3)0.0;
+	if (aliCount > 0)
+	{
+		aliSteer = aliVelSum / (float)aliCount;     // 近い個体の速度の平均を求める
+		aliSteer = normalize(aliSteer) * _MaxSpeed; // 最大速度に調整
+		aliSteer = aliSteer - P_velocity;           // 操舵力を計算
+		aliSteer = limit(aliSteer, _MaxSteerForce); // 操舵力を制限
+	}
+	// 操舵力（結合）
+	float3 cohSteer = (float3)0.0;
+	if (cohCount > 0)
+	{
+		cohPosSum = cohPosSum / (float)cohCount;    // 近い個体の位置の平均を求める
+		cohSteer = cohPosSum - P_position;      // 平均位置方向へのベクトルを求める
+		cohSteer = normalize(cohSteer) * _MaxSpeed; // 最大速度に調整
+		cohSteer = cohSteer - P_velocity;           // 操舵力を計算
+		cohSteer = limit(cohSteer, _MaxSteerForce); // 操舵力を制限
+	}
+	force += aliSteer * _AlignmentWeight; // 操舵力に整列する力を加える
+	force += cohSteer * _CohesionWeight;  // 操舵力に結合する力を加える
+	force += sepSteer * _SeparateWeight;  // 操舵力に分離する力を加える
+
+	_BoidForceBufferWrite[P_ID] = force; // 書き込み
+}
+
+// 速度, 位置計算用カーネル関数
+[numthreads(SIMULATION_BLOCK_SIZE, 1, 1)]
+void IntegrateCS
+(
+	uint3 DTid : SV_DispatchThreadID // スレッド全体で固有のID
+)
+{
+	const unsigned int P_ID = DTid.x;          // インデックスを取得
+											           
+	BoidData b = _BoidDataBufferWrite[P_ID];   // 現在のBoidデータを読み込む
+	float3 force = _BoidForceBufferRead[P_ID]; // 操舵力を読み込む
+	
+	// 壁に近づいたら反発する力を与える
+	force += avoidWall(b.position) * _AvoidWallWeight; 
+
+	b.velocity += force * _DeltaTime;          // 操舵力を速度に適用
+	b.velocity = limit(b.velocity, _MaxSpeed); // 速度を制限
+	b.position += b.velocity * _DeltaTime;     // 位置を更新
+											           
+	_BoidDataBufferWrite[P_ID] = b;            // 計算結果を書き込む
+}
