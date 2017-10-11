@@ -5,6 +5,8 @@ UnityGraphicsProgramming
 
 - Unityではじめるプロシージャルモデリング [@mattatz](https://github.com/mattatz) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/ProceduralModeling
 
+- ジオメトリシェーダーで草を生やす [@a3geek](https://github.com/a3geek) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/SimpleGeometryShaderAndGrassShader
+
 - 雰囲気で始めるMarchingCubes入門 [@kaiware007](https://github.com/kaiware007) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/GPUMarchingCubes
 
 - 格子法による流体シミュレーション [@sakope](https://github.com/sakope) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/StableFluids
