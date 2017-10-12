@@ -18,7 +18,6 @@ https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/Si
 
 - 雰囲気で始めるMarchingCubes入門 [@kaiware007](https://github.com/kaiware007) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/GPUMarchingCubes
 
-- MCMCで行う3次元空間サンプリング [@komietty](https://github.com/komietty) - 
-URLを
+- MCMCで行う3次元空間サンプリング [@komietty](https://github.com/komietty) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/MCMC3d
 
 - MultiPlanePerspectiveProjection [@fuqunaga](https://github.com/fuqunaga) - https://github.com/IndieVisualLab/UnityGraphicsProgramming/tree/master/Assets/RoomProjection
