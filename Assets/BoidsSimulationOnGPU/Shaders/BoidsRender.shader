@@ -73,7 +73,7 @@
 			object2world._11_22_33_44 = float4(scl.xyz, 1.0);
 			// 速度からY軸についての回転を算出
 			float rotY = 
-				atan2(-boidData.velocity.z, boidData.velocity.x) + UNITY_PI * 0.5;
+				atan2(boidData.velocity.x, boidData.velocity.z);
 			// 速度からX軸についての回転を算出
 			float rotX = 
 				-asin(boidData.velocity.y / (length(boidData.velocity.xyz) + 1e-8));
