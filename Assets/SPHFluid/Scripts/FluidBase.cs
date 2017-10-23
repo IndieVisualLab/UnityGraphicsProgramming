@@ -175,7 +175,7 @@ namespace Kodai.Fluid.SPH {
         /// バッファの初期化
         /// </summary>
         private void InitBuffers() {
-            particlesBufferRead = new ComputeBuffer(numParticles, Marshal.SizeOf(typeof(FluidParticle)));
+            particlesBufferRead = new ComputeBuffer(numParticles, Marshal.SizeOf(typeof(T)));
             var particles = new T[numParticles];
             InitParticleData(ref particles);
             particlesBufferRead.SetData(particles);
