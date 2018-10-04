@@ -247,7 +247,7 @@ namespace ProceduralModeling {
                     float ratio; // [0.0 ~ 1.0]
                     if(count == 1)
                     {
-						// 分岐数が位置である場合（0除算を回避）
+						// 分岐数が1である場合（0除算を回避）
                         ratio = 1f;
                     } else
                     {
